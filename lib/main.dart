@@ -9,6 +9,7 @@ import 'screens/preferencias_screen.dart';
 import 'screens/csv_log_screen.dart';
 import 'screens/csv_nodes_screen.dart';
 import 'screens/crud_screen.dart';
+import 'screens/historical_alerts_screen.dart';
 
 // BASE DE DATOS SQLITE
 import 'database/database_helper.dart';
@@ -24,21 +25,19 @@ Future<void> main() async {
   if (Platform.isWindows ||
       Platform.isLinux ||
       Platform.isMacOS) {
-
     sqfliteFfiInit();
-
     databaseFactory = databaseFactoryFfi;
 
     debugPrint('SQLite configurado para escritorio');
   }
 
-  // Inicializar base de datos SQLite
+  // Inicializar la base de datos
   try {
     final db = await DatabaseHelper.instance.database;
 
     debugPrint('Base de datos SQLite inicializada');
 
-    // Consultar las tablas existentes
+    // Consultar tablas existentes
     final tablas = await db.rawQuery(
       "SELECT name FROM sqlite_master "
       "WHERE type = 'table' "
@@ -48,11 +47,15 @@ Future<void> main() async {
 
     debugPrint('TABLAS SQLITE: $tablas');
 
+    // Verificar migración SQLite V2
+    final migracion =
+        await DatabaseHelper.instance.verificarMigracion();
+
+    debugPrint('MIGRACIÓN SQLITE: $migracion');
   } catch (e) {
     debugPrint('Error al inicializar SQLite: $e');
   }
 
-  // Ejecutar aplicación
   runApp(const MyApp());
 }
 
@@ -67,7 +70,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Sistema IoT - Unidad 2',
-
       debugShowCheckedModeBanner: false,
 
       theme: ThemeData(
@@ -83,13 +85,13 @@ class MyApp extends StatelessWidget {
 }
 
 // ======================================
-// PANTALLA PRINCIPAL
+// MENÚ PRINCIPAL
 // ======================================
 
 class InicioScreen extends StatelessWidget {
   const InicioScreen({super.key});
 
-  // Crear tarjetas para acceder a los módulos
+  // Crear tarjetas para los módulos
   Widget crearTarjeta({
     required BuildContext context,
     required String titulo,
@@ -98,7 +100,6 @@ class InicioScreen extends StatelessWidget {
     required Color color,
     required Widget pantalla,
   }) {
-
     return Card(
       elevation: 3,
       margin: const EdgeInsets.only(bottom: 20),
@@ -108,7 +109,6 @@ class InicioScreen extends StatelessWidget {
 
         child: Column(
           children: [
-
             Icon(
               icono,
               size: 50,
@@ -136,10 +136,7 @@ class InicioScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             ElevatedButton.icon(
-              icon: const Icon(
-                Icons.arrow_forward,
-              ),
-
+              icon: const Icon(Icons.arrow_forward),
               label: const Text('Abrir módulo'),
 
               onPressed: () {
@@ -157,22 +154,12 @@ class InicioScreen extends StatelessWidget {
     );
   }
 
-  // ======================================
-  // DISEÑO DEL MENÚ PRINCIPAL
-  // ======================================
-
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       appBar: AppBar(
-        title: const Text(
-          'Sistema IoT - Unidad 2',
-        ),
-
+        title: const Text('Sistema IoT - Unidad 2'),
         centerTitle: true,
-
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
@@ -187,14 +174,11 @@ class InicioScreen extends StatelessWidget {
             ),
 
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
 
               children: [
-
                 const SizedBox(height: 20),
 
-                // ICONO PRINCIPAL
                 const Icon(
                   Icons.sensors,
                   size: 90,
@@ -203,11 +187,9 @@ class InicioScreen extends StatelessWidget {
 
                 const SizedBox(height: 15),
 
-                // TÍTULO PRINCIPAL
                 const Text(
                   'Sistema de Monitoreo IoT',
                   textAlign: TextAlign.center,
-
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
@@ -224,95 +206,92 @@ class InicioScreen extends StatelessWidget {
 
                 const SizedBox(height: 35),
 
-                // ======================================
-                // MÓDULO 1 - PREFERENCIAS JSON
-                // ======================================
+                // ==================================
+                // MÓDULO 1 - JSON
+                // ==================================
 
                 crearTarjeta(
                   context: context,
-
                   titulo: 'Preferencias JSON',
-
                   descripcion:
-                      'Guardar tema oscuro e intervalo '
-                      'de muestreo de sensores IoT.',
-
+                      'Guardar tema oscuro y configurar '
+                      'el intervalo de muestreo IoT.',
                   icono: Icons.settings,
-
                   color: Colors.blue,
-
                   pantalla: const PreferenciasScreen(),
                 ),
 
-                // ======================================
-                // MÓDULO 2 - CSV DE TEMPERATURAS
-                // ======================================
+                // ==================================
+                // MÓDULO 2 - CSV SENSORES
+                // ==================================
 
                 crearTarjeta(
                   context: context,
-
                   titulo: 'Registro CSV de Sensores',
-
                   descripcion:
-                      'Generar 100 lecturas simuladas '
-                      'de temperatura y validar '
-                      'su integridad SHA-256.',
-
+                      'Generar 100 lecturas de temperatura '
+                      'y verificar integridad SHA-256.',
                   icono: Icons.thermostat,
-
                   color: Colors.orange,
-
                   pantalla: const CsvLogScreen(),
                 ),
 
-                // ======================================
-                // MÓDULO 3 - NODOS IoT CSV
-                // ======================================
+                // ==================================
+                // MÓDULO 3 - CSV NODOS
+                // ==================================
 
                 crearTarjeta(
                   context: context,
-
                   titulo: 'Nodos IoT - CSV',
-
                   descripcion:
-                      'Exportar e importar nodos ESP32 '
-                      'y comprobar la integridad '
-                      'de los archivos mediante SHA-256.',
-
+                      'Exportar, importar y validar '
+                      'la información de nodos ESP32.',
                   icono: Icons.memory,
-
                   color: Colors.green,
-
                   pantalla: const CsvNodesScreen(),
                 ),
 
-                // ======================================
+                // ==================================
                 // MÓDULO 4 - CRUD SQLITE
-                // ======================================
+                // ==================================
 
                 crearTarjeta(
                   context: context,
-
                   titulo: 'CRUD SQLite - IoT',
-
                   descripcion:
-                      'Registrar, consultar, actualizar '
+                      'Registrar, consultar, modificar '
                       'y eliminar nodos ESP32. '
-                      'Guardar lecturas masivas '
-                      'mediante transacciones ACID.',
-
+                      'Realizar transacciones ACID '
+                      'y sincronizar lecturas con MySQL.',
                   icono: Icons.storage,
-
                   color: Colors.deepPurple,
-
                   pantalla: const CrudScreen(),
+                ),
+
+                // ==================================
+                // MÓDULO 5 - HISTORIAL Y ALERTAS
+                // ACTIVIDAD 3
+                // ==================================
+
+                crearTarjeta(
+                  context: context,
+                  titulo: 'Histórico y Alertas IoT',
+                  descripcion:
+                      'Consultar el historial de lecturas '
+                      'almacenadas en SQLite mediante '
+                      'FutureBuilder y ListView.builder. '
+                      'Identificar temperaturas '
+                      'superiores a 35 °C.',
+                  icono: Icons.warning_amber_rounded,
+                  color: Colors.red,
+                  pantalla: const HistoricalAlertsScreen(),
                 ),
 
                 const SizedBox(height: 20),
 
-                // ======================================
-                // INFORMACIÓN DE SQLITE
-                // ======================================
+                // ==================================
+                // INFORMACIÓN SQLITE
+                // ==================================
 
                 const Card(
                   elevation: 2,
@@ -322,8 +301,6 @@ class InicioScreen extends StatelessWidget {
 
                     child: Column(
                       children: [
-
-                        // ICONO CORREGIDO
                         Icon(
                           Icons.storage,
                           size: 45,
@@ -333,7 +310,7 @@ class InicioScreen extends StatelessWidget {
                         SizedBox(height: 10),
 
                         Text(
-                          'Base de Datos Local',
+                          'Base de Datos Local SQLite',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -343,7 +320,14 @@ class InicioScreen extends StatelessWidget {
                         SizedBox(height: 10),
 
                         Text(
-                          'SQLite - iot_local.db',
+                          'Archivo: iot_local.db',
+                          textAlign: TextAlign.center,
+                        ),
+
+                        SizedBox(height: 5),
+
+                        Text(
+                          'Versión: 2',
                           textAlign: TextAlign.center,
                         ),
 
@@ -357,8 +341,8 @@ class InicioScreen extends StatelessWidget {
                         SizedBox(height: 10),
 
                         Text(
-                          'Almacenamiento local de '
-                          'nodos y lecturas de sensores IoT.',
+                          'Historial de sensores '
+                          'y persistencia local IoT.',
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -366,13 +350,12 @@ class InicioScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 25),
 
-                // PIE DE PÁGINA
                 const Text(
-                  'Proyecto Flutter - Actividad 2',
+                  'Proyecto Integrador '
+                  'Smart-Environment IoT',
                   textAlign: TextAlign.center,
-
                   style: TextStyle(
                     color: Colors.grey,
                   ),
